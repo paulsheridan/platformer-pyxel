@@ -17,6 +17,8 @@ class Level():
         self.map_width = len(self.collision.matrix[0])
         self.map_height = len(self.collision.matrix)
 
+        self.climbable = [0, 1, 6, 7]
+
         # TODO: Create one more layer for spawns and checkpoints, then read those into memory and set
         # spawn and checkpoints for the player.
 

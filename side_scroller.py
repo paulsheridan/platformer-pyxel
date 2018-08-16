@@ -42,23 +42,22 @@ class App:
             self.player.run(-1)
         if pyxel.btn(pyxel.KEY_D):
             self.player.run(1)
-        if pyxel.btn(pyxel.KEY_I):
-            self.test_val += 1
-        if pyxel.btn(pyxel.KEY_O):
-            self.test_val -= 1
-        if pyxel.btnp(pyxel.KEY_S, 60, 30):
-            print(pyxel.frame_count)
-            if self.player.grounded:
-                self.player.charge()
-        if pyxel.btn(pyxel.KEY_SPACE):
+        if pyxel.btn(pyxel.KEY_W):
+            if self.player.wall_climb:
+                self.player.climb(-1)
+        if pyxel.btn(pyxel.KEY_S):
+            if self.player.wall_climb:
+                self.player.climb(1)
+        if pyxel.btn(pyxel.KEY_K):
+            if self.player.wall_climb:
+                self.player.charge_up()
+        if pyxel.btnp(pyxel.KEY_L):
             if self.player.grounded:
                 self.player.jump()
+            elif self.player.double_primed:
+                self.player.double_jump()
         if pyxel.btn(pyxel.KEY_ESCAPE):
             pyxel.quit()
-        if pyxel.btn(pyxel.KEY_T):
-            pyxel.pal(1, 7)
-        else:
-            pyxel.pal()
         if pyxel.btn(pyxel.KEY_P):
             import pdb; pdb.set_trace()
 
@@ -100,18 +99,14 @@ class App:
         self.player.y_collision(self.camera, self.level)
 
         self.sparkle_emitter.update_position(self.offset_delta())
+        self.player.update_gravity()
+        print(self.player.wall_climb)
 
-        self.player.vy = min(self.player.vy + 1, 7)
-        if self.player.vx > 0:
-            self.player.vx = self.player.vx - 1
-        elif self.player.vx < 0:
-            self.player.vx = self.player.vx + 1
-
-        if self.player.jump_chg >= 4:
+        if self.player.charge >= 4:
             self.sparkle_emitter.sparkle(self.test_val)
 
     def offset_delta(self):
-        return self.camera.offset_x - self.camera.last_offset_x, self.camera.offset_y - self.camera.last_offset_y
+        return (self.camera.offset_x - self.camera.last_offset_x), (self.camera.offset_y - self.camera.last_offset_y)
 
 
 def update_axis(pos, vel, offset, max_scroll, viewport):
