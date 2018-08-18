@@ -1,4 +1,5 @@
 import pyxel
+import math
 
 class Player():
     def __init__(self):
@@ -10,9 +11,19 @@ class Player():
         self.vx = 0
         self.vy = 0
 
+        self.speed = 3
+
+        self.attack_zero_frame = 0
+        self.attack_frame_count = 6
+        self.attacking = False
+
         self.grounded = False
         self.double_primed = True
-        self.wall_climb = False
+
+        self.on_wall = False
+        self.claws_out = False
+        self.can_climb = []
+
         self.direction = 1
         self.charge = 0
 
@@ -31,14 +42,25 @@ class Player():
         self.vy = -8
         self.double_primed = False
 
+    def wall_jump(self):
+        self.vy = -8
+        self.vx = -4 * self.direction
+        self.double_primed = True
+        self.on_wall = False
+
     def run(self, direction):
-        self.direction = direction
-        if not self.wall_climb:
-            self.vx = 2 * direction
+        if not self.on_wall:
+            self.direction = direction
+            self.vx = self.speed * direction
 
     def climb(self, direction):
-        if self.wall_climb:
-            self.vy = 2 * direction
+        if self.on_wall:
+            self.vy = self.speed * direction
+
+    def attack(self):
+        self.claws_out = True
+        self.attacking = True
+        self.attack_zero_frame = pyxel.frame_count
 
     def set_coll_defaults(self, camera):
         # player coordinates are base 0, so the distance right and down from the 0th element
@@ -50,93 +72,93 @@ class Player():
         return top, bottom, right, left
 
     def x_collision(self, camera, level):
+        self.can_climb = [False, False]
         top, bottom, right, left = self.set_coll_defaults(camera)
 
         if self.vx < 0:
-            for coord in [left, top], [left, bottom]:
-                tile = [
-                    (coord[0] + self.vx) // level.tile_size,
-                    coord[1] // level.tile_size
-                ]
-                if level.collision.matrix[tile[1]][tile[0]] != -1:
-                    self.x = (tile[0]
+            for idx, coord in enumerate([[left, top], [left, bottom]]):
+                left = get_tile_x(coord[0], coord[1], self.vx, level.tile_size)
+                if level.collision.matrix[left[1]][left[0]] != -1:
+                    self.x = (left[0]
                               * level.tile_size
                               + level.tile_size
                               - camera.offset_x)
-                    self.check_climbable(tile, level)
-                else:
-                    self.wall_climb = False
-                    break
+                self.can_climb[idx] = check_climbable(left, level)
 
         elif self.vx > 0:
-            for coord in [right, top], [right, bottom]:
-                tile = [
-                    (coord[0] + self.vx) // level.tile_size,
-                    coord[1] // level.tile_size
-                ]
-                if level.collision.matrix[tile[1]][tile[0]] != -1:
-                    self.x = (tile[0]
+            for idx, coord in enumerate([[right, top], [right, bottom]]):
+                right = get_tile_x(coord[0], coord[1], self.vx, level.tile_size)
+                if level.collision.matrix[right[1]][right[0]] != -1:
+                    self.x = (right[0]
                               * level.tile_size
                               - self.width
                               - camera.offset_x)
-                    self.check_climbable(tile, level)
-                else:
-                    self.wall_climb = False
-                    break
-
-    def check_climbable(self, tile, level):
-        self.wall_climb = level.collision.matrix[tile[1]][tile[0]] in level.climbable
+                self.can_climb[idx] = check_climbable(right, level)
 
     def y_collision(self, camera, level):
         top, bottom, right, left = self.set_coll_defaults(camera)
 
         if self.y >= 0 and self.vy > 0:
             for coord in [left, bottom], [right, bottom]:
-                tile = [
-                    coord[0] // level.tile_size,
-                    (coord[1] + self.vy) // level.tile_size
-                ]
-                if level.collision.matrix[tile[1]][tile[0]] != -1:
+                floor = get_tile_y(coord[0], coord[1], self.vy, level.tile_size)
+                if level.collision.matrix[floor[1]][floor[0]] != -1:
                     self.vy = 0
-                    self.y = (tile[1]
+                    self.y = (floor[1]
                               * level.tile_size
                               - self.height
                               - camera.offset_y)
                     self.grounded = True
-                    self.wall_climb = False
+                    self.on_wall = False
                     self.double_primed = True
                     break
                 else:
                     self.grounded = False
+            if self.on_wall and not self.can_climb[1]:
+                self.vy = 0
+                self.y = (floor[1]
+                          * level.tile_size
+                          - self.height
+                          - camera.offset_y - 2)
+                self.can_climb[1] = True
 
         elif self.y >= 0 and self.vy < 0:
             for coord in [left, top], [right, top]:
-                tile = [
-                    coord[0] // level.tile_size,
-                    (coord[1] + self.vy) // level.tile_size
-                ]
-                if level.collision.matrix[tile[1]][tile[0]] != -1:
+                ceiling = get_tile_y(coord[0], coord[1], self.vy, level.tile_size)
+                if level.collision.matrix[ceiling[1]][ceiling[0]] != -1:
                     self.vy = 0
-                    self.y = (tile[1]
+                    self.y = (ceiling[1]
                               * level.tile_size
                               + level.tile_size
                               - camera.offset_y)
                     break
+            if self.on_wall and not self.can_climb[0]:
+                self.vy = 0
+                self.y = (ceiling[1]
+                          * level.tile_size
+                          + level.tile_size
+                          - camera.offset_y)
+                self.can_climb[0] = True
+                # TODO: Troubleshoot weird shaking error when climbing against a non-climbable wall
 
     def update_gravity(self):
-        if not self.wall_climb:
-            self.vy = min(self.vy + 1, 7)
+        if self.on_wall:
+            if self.vy > 0:
+                self.vy = self.vy - 1
+            elif self.vy < 0:
+                self.vy = self.vy + 1
+            # self.vy = 0
         else:
-            self.vy = 0
-        if self.vx > 0:
-            self.vx = self.vx - 1
-        elif self.vx < 0:
-            self.vx = self.vx + 1
+            self.vy = min(self.vy + 1, 7)
+            if self.vx > 0:
+                self.vx = self.vx - 1
+            elif self.vx < 0:
+                self.vx = self.vx + 1
+            # self.vx = 0
 
-    def render(self):
+    def update_anim(self):
         frame_x = self.anim_w * 7
         if not self.grounded:
-            if not self.wall_climb:
+            if not self.on_wall:
                 if self.vy >= 0:
                     frame_x = self.anim_w * 13
                 else:
@@ -151,12 +173,12 @@ class Player():
                 else:
                     # not climbing, but on wall animation
                     pass
-
         else:
             if pyxel.btn(pyxel.KEY_A) or pyxel.btn(pyxel.KEY_D):
                 if pyxel.btnp(pyxel.KEY_A) or pyxel.btnp(pyxel.KEY_D):
                     self.anim_zero_frame = pyxel.frame_count
                 frame_x = self.anim_w * (((pyxel.frame_count - self.anim_zero_frame) // 4) % 6)
+                # TODO: set running and idle frame counts and use those instead of just ints.
             else:
                 if pyxel.btnr(pyxel.KEY_A) or pyxel.btnr(pyxel.KEY_D):
                     self.anim_zero_frame = pyxel.frame_count
@@ -165,3 +187,32 @@ class Player():
         # TODO: make the rendering offset between player collision box
         # and the image blt dynamic based on frame size and hit box size
         pyxel.blt(self.x-1, self.y-5, 0, frame_x, 16, -self.direction*self.width+(3*-self.direction), self.height+5, 1)
+
+        if self.attacking:
+            if pyxel.btnp(pyxel.KEY_L):
+                print('just pressed')
+                self.attack_zero_frame = pyxel.frame_count
+            else:
+                print('still going')
+                if pyxel.frame_count < self.attack_zero_frame + self.attack_frame_count:
+                    frame_x = ((pyxel.frame_count - self.attack_zero_frame) // 2) + 18 * 11
+                    print(frame_x)
+                    pyxel.blt(self.x+self.direction*4, self.y-5, 0, frame_x, 16, -self.direction*self.width+(3*-self.direction), self.height+5, 1)
+                else:
+                    self.attacking = False
+
+
+def get_tile_x(x, y, vx, tile_size):
+    return [
+        (x + vx) // tile_size,
+        y // tile_size
+    ]
+
+def get_tile_y(x, y, vy, tile_size):
+    return [
+        x // tile_size,
+        (y + vy) // tile_size
+    ]
+
+def check_climbable(tile, level):
+    return level.collision.matrix[tile[1]][tile[0]] in level.climbable_tiles
