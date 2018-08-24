@@ -11,3 +11,9 @@ class Camera():
 
         self.height_in_tiles = pyxel.height // level.tile_size
         self.width_in_tiles = pyxel.width // level.tile_size
+
+    def update_last_offset(self):
+        self.last_offset_x, self.last_offset_y = self.offset_x, self.offset_y
+
+    def offset_delta(self):
+        return (self.offset_x - self.last_offset_x), (self.offset_y - self.last_offset_y)

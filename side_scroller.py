@@ -28,7 +28,6 @@ class App:
         pyxel.image(1).load(0, 0, os.path.join(self.assets, 'tileset.png'))
         pyxel.image(2).load(0, 0, os.path.join(self.assets, 'background.png'))
 
-
         self.level = Level(self.assets, 'mapfile.txt', 16)
         self.camera = Camera(self.level)
         self.player = Player()
@@ -48,12 +47,8 @@ class App:
         if pyxel.btn(pyxel.KEY_S):
             if self.player.on_wall:
                 self.player.climb(1)
-        # if pyxel.btnp(pyxel.KEY_L):
-        #     self.player.attack()
-        if pyxel.btn(pyxel.KEY_L):
-            self.player.claws_out = True
-        else:
-            self.player.claws_out = False
+        if pyxel.btnp(pyxel.KEY_L):
+            self.player.attack()
         if pyxel.btnp(pyxel.KEY_SPACE):
             if self.player.on_wall:
                 self.player.wall_jump()
@@ -64,7 +59,7 @@ class App:
         if pyxel.btn(pyxel.KEY_ESCAPE):
             pyxel.quit()
 
-        self.camera.last_offset_x, self.camera.last_offset_y = self.camera.offset_x, self.camera.offset_y
+        self.camera.update_last_offset()
         self.update_player()
 
     def draw(self):
@@ -75,11 +70,11 @@ class App:
         #     pyxel.blt(i * 240 - self.camera.offset_x/2, 39, 2, 0, 82, 240, 82, 1)
         # render the clouds
         for i in range(2):
-            pyxel.blt(i * 240 - self.camera.offset_x/50, 10, 2, 0, 168, 240, 40, 1)
+            pyxel.blt(i * 240 - self.camera.offset_x//50, 10 - self.camera.offset_y//50, 2, 0, 168, 240, 40, 1)
         self.level.render(self.camera, self.level.background, 1)
         self.level.render(self.camera, self.level.collision, 1)
-        self.player.update_anim()
         self.sparkle_emitter.render_particles()
+        self.player.update_anim()
         self.level.render(self.camera, self.level.foreground, 1)
 
     def update_player(self):
@@ -100,16 +95,10 @@ class App:
             pyxel.height,
         )
         self.player.y_collision(self.camera, self.level)
-        print(self.player.on_wall)
-        print(self.player.can_climb)
 
-        self.player.on_wall = bool(all(self.player.can_climb))
         self.player.update_gravity()
-        self.sparkle_emitter.update_position(self.offset_delta())
-        self.sparkle_emitter.sparkle(self.test_val)
-
-    def offset_delta(self):
-        return (self.camera.offset_x - self.camera.last_offset_x), (self.camera.offset_y - self.camera.last_offset_y)
+        self.sparkle_emitter.update_position(self.camera.offset_delta())
+        self.sparkle_emitter.sparkle(0, 1, 12)
 
 
 def update_axis(pos, vel, offset, max_scroll, viewport):
