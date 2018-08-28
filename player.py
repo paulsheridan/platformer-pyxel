@@ -1,9 +1,13 @@
+import os
 import random
 import math
+import json
 import pyxel
 
+from animation import AnimationManager
+
 class Player():
-    def __init__(self):
+    def __init__(self, assets_path):
         self.height = 11
         self.width = 8
 
@@ -29,6 +33,11 @@ class Player():
 
         self.anim_w = 11
         self.anim_zero_frame = 0
+
+        self.anim_mgr = AnimationManager(self, 11, -1, -5)
+
+        with open(os.path.join(assets_path, 'animation_key.json')) as data:
+            self.anim_mgr.key = json.load(data)
 
     def charge_up(self):
         self.charge = min(self.charge + 1, 200)

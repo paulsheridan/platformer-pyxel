@@ -1,4 +1,5 @@
 import os
+import json
 import pyxel
 
 from random import randint
@@ -14,26 +15,22 @@ class App:
         pyxel.init(240, 160, caption='test game')
 
         self.levelname = 'level1'
-        self.assets_dir = 'assets'
-        self.assets = os.path.realpath(
-            os.path.join(
-                os.getcwd(),
-                os.path.dirname(__file__),
-                self.assets_dir,
-                self.levelname,
-            )
+        self.assets = os.path.join(
+            os.getcwd(),
+            os.path.dirname(__file__),
+            'assets',
         )
 
-        pyxel.image(0).load(0, 0, os.path.join(self.assets, '../animation.png'))
-        pyxel.image(1).load(0, 0, os.path.join(self.assets, 'tileset.png'))
-        pyxel.image(2).load(0, 0, os.path.join(self.assets, 'background.png'))
+        pyxel.image(0).load(0, 0, os.path.join(self.assets, 'animation.png'))
+        pyxel.image(1).load(0, 0, os.path.join(self.assets, self.levelname, 'tileset.png'))
+        pyxel.image(2).load(0, 0, os.path.join(self.assets, self.levelname, 'background.png'))
 
-        self.level = Level(self.assets, 'mapfile.txt', 16)
+        self.level = Level(os.path.join(self.assets, self.levelname), 'mapfile.txt', 16)
         self.camera = Camera(self.level)
-        self.player = Player()
+        self.player = Player(self.assets)
         self.sparkle_emitter = ParticleEmitter(self.player)
 
-        self.test_val = 0
+        self.zero_frame = 0
         pyxel.run(self.update, self.draw)
 
     def update(self):
@@ -99,6 +96,10 @@ class App:
         self.player.update_gravity()
         self.sparkle_emitter.update_position(self.camera.offset_delta())
         self.sparkle_emitter.sparkle(0, 1, 12)
+
+    # def respawn(self):
+    #     self.zero_frame = pyxel.frame_count
+    #     pyxel.cls()
 
 
 def update_axis(pos, vel, offset, max_scroll, viewport):

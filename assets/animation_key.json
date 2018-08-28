@@ -1,0 +1,32 @@
+{
+  "default": {
+    "width": 11,
+    "first frame": 7,
+    "length": 1,
+    "loop": false
+  },
+  "jump": {
+    "width": 11,
+    "first frame": 12,
+    "length": 1,
+    "loop": false
+  },
+  "run": {
+    "width": 11,
+    "first frame": 0,
+    "length": 6,
+    "loop": true
+  },
+  "idle": {
+    "width": 11,
+    "first frame": 6,
+    "length": 6,
+    "loop": true
+  },
+  "attack": {
+    "width": 11,
+    "first frame": 13,
+    "length": 1,
+    "loop": false
+  }
+}

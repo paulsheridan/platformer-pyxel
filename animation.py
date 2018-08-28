@@ -1,15 +1,14 @@
 import pyxel
 
-class Animation():
-    def __init__(self, anchor, anim_width, default_frame, anim_ost_x, anim_ost_y):
+class AnimationManager():
+    def __init__(self, anchor, default_width, offset_x=0, offset_y=0):
         self.anchor = anchor
-        self.anim_width = anim_width
-        self.default_frame = default_frame
+        self.default_width = default_width
         self.offset_x = offset_x
         self.offset_y = offset_y
         self.zero_frame = 0
-        self.frame_x = 0
-        self.frame_y = 0
+        self.speed = 4
+        self.key = {}
 
     def single_frame(self, frame):
         pass
