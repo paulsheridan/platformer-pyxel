@@ -115,10 +115,6 @@ class Player():
                     break
                 else:
                     self.grounded = False
-            # if self.on_wall and not self.can_climb[1]:
-            #     self.vy = 0
-            #     self.y = floor[1] * level.tile_size - self.height - camera.offset_y - 2
-            #     self.can_climb[1] = True
 
         elif self.y >= 0 and self.vy < 0:
             for coord in [left, top], [right, top]:
@@ -127,11 +123,6 @@ class Player():
                     self.vy = 0
                     self.y = ceiling[1] * level.tile_size + level.tile_size - camera.offset_y
                     break
-            # if self.on_wall and not self.can_climb[0]:
-            #     self.vy = 0
-            #     self.y = ceiling[1] * level.tile_size + level.tile_size - camera.offset_y - 2
-                self.can_climb[0] = True
-                # TODO: Troubleshoot weird shaking error when climbing against a non-climbable wall and on_wall becoming false after second time.
 
     def update_gravity(self):
         self.on_wall = bool(all(self.can_climb) and not self.grounded)
