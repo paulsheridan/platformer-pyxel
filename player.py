@@ -6,6 +6,7 @@ import pyxel
 
 from animation import AnimationManager
 
+
 class Player():
     def __init__(self, assets_path):
         self.height = 11
@@ -88,27 +89,33 @@ class Player():
 
         if self.vx < 0:
             for idx, coord in enumerate([[left, top], [left, bottom]]):
-                left = get_tile_x(coord[0], coord[1], self.vx, level.tile_size)
+                left = self.get_tile_x(
+                    coord[0], coord[1], self.vx, level.tile_size)
                 if level.collision.matrix[left[1]][left[0]] != -1:
-                    self.x = left[0] * level.tile_size + level.tile_size - camera.offset_x
-                self.can_climb[idx] = check_climbable(left, level)
+                    self.x = left[0] * level.tile_size + \
+                        level.tile_size - camera.offset_x
+                self.can_climb[idx] = self.check_climbable(left, level)
 
         elif self.vx > 0:
             for idx, coord in enumerate([[right, top], [right, bottom]]):
-                right = get_tile_x(coord[0], coord[1], self.vx, level.tile_size)
+                right = self.get_tile_x(
+                    coord[0], coord[1], self.vx, level.tile_size)
                 if level.collision.matrix[right[1]][right[0]] != -1:
-                    self.x = right[0] * level.tile_size - self.width - camera.offset_x
-                self.can_climb[idx] = check_climbable(right, level)
+                    self.x = right[0] * level.tile_size - \
+                        self.width - camera.offset_x
+                self.can_climb[idx] = self.check_climbable(right, level)
 
     def y_collision(self, camera, level):
         top, bottom, right, left = self.set_coll_defaults(camera)
 
         if self.y >= 0 and self.vy > 0:
             for coord in [left, bottom], [right, bottom]:
-                floor = get_tile_y(coord[0], coord[1], self.vy, level.tile_size)
+                floor = self.get_tile_y(
+                    coord[0], coord[1], self.vy, level.tile_size)
                 if level.collision.matrix[floor[1]][floor[0]] != -1:
                     self.vy = 0
-                    self.y = floor[1] * level.tile_size - self.height - camera.offset_y
+                    self.y = floor[1] * level.tile_size - \
+                        self.height - camera.offset_y
                     self.grounded = True
                     self.on_wall = False
                     self.double_primed = True
@@ -118,10 +125,12 @@ class Player():
 
         elif self.y >= 0 and self.vy < 0:
             for coord in [left, top], [right, top]:
-                ceiling = get_tile_y(coord[0], coord[1], self.vy, level.tile_size)
+                ceiling = self.get_tile_y(
+                    coord[0], coord[1], self.vy, level.tile_size)
                 if level.collision.matrix[ceiling[1]][ceiling[0]] != -1:
                     self.vy = 0
-                    self.y = ceiling[1] * level.tile_size + level.tile_size - camera.offset_y
+                    self.y = ceiling[1] * level.tile_size + \
+                        level.tile_size - camera.offset_y
                     break
 
     def update_gravity(self):
@@ -160,39 +169,46 @@ class Player():
             if pyxel.btn(pyxel.KEY_A) or pyxel.btn(pyxel.KEY_D):
                 if pyxel.btnp(pyxel.KEY_A) or pyxel.btnp(pyxel.KEY_D):
                     self.anim_zero_frame = pyxel.frame_count
-                frame_x = self.anim_w * (((pyxel.frame_count - self.anim_zero_frame) // 4) % 6)
+                frame_x = self.anim_w * \
+                    (((pyxel.frame_count - self.anim_zero_frame) // 4) % 6)
                 # TODO: set running and idle frame counts and use those instead of just ints.
             else:
                 if pyxel.btnr(pyxel.KEY_A) or pyxel.btnr(pyxel.KEY_D):
                     self.anim_zero_frame = pyxel.frame_count
-                frame_x = self.anim_w * (6 + ((pyxel.frame_count - self.anim_zero_frame) // 4) % 6)
+                frame_x = self.anim_w * \
+                    (6 + ((pyxel.frame_count - self.anim_zero_frame) // 4) % 6)
 
         # TODO: make the rendering offset between player collision box
         # and the image blt dynamic based on frame size and hit box size
-        pyxel.blt(self.x-1, self.y-5, 0, frame_x, 16, -self.direction*self.width+(3*-self.direction), self.height+5, 1)
+        pyxel.blt(self.x-1, self.y-5, 0, frame_x, 16, -self.direction *
+                  self.width+(3*-self.direction), self.height+5, 1)
 
         if self.attacking:
             if pyxel.btnp(pyxel.KEY_L):
                 self.attack_zero_frame = pyxel.frame_count
             else:
                 if pyxel.frame_count < self.attack_zero_frame + self.attack_frame_count:
-                    frame_x = self.anim_w * (17 + (pyxel.frame_count - self.attack_zero_frame) // 2)
-                    pyxel.blt(self.x+self.direction*4, self.y-5, 0, frame_x, 16, -self.direction*self.width+(3*-self.direction), self.height+5, 1)
+                    frame_x = self.anim_w * \
+                        (17 + (pyxel.frame_count - self.attack_zero_frame) // 2)
+                    pyxel.blt(self.x+self.direction*4, self.y-5, 0, frame_x, 16, -
+                              self.direction*self.width+(3*-self.direction), self.height+5, 1)
                 else:
                     self.attacking = False
 
+    @staticmethod
+    def get_tile_x(x, y, vx, tile_size):
+        return [
+            (x + vx) // tile_size,
+            y // tile_size
+        ]
 
-def get_tile_x(x, y, vx, tile_size):
-    return [
-        (x + vx) // tile_size,
-        y // tile_size
-    ]
+    @staticmethod
+    def get_tile_y(x, y, vy, tile_size):
+        return [
+            x // tile_size,
+            (y + vy) // tile_size
+        ]
 
-def get_tile_y(x, y, vy, tile_size):
-    return [
-        x // tile_size,
-        (y + vy) // tile_size
-    ]
-
-def check_climbable(tile, level):
-    return level.collision.matrix[tile[1]][tile[0]] in level.climbable_tiles
+    @staticmethod
+    def check_climbable(tile, level):
+        return level.collision.matrix[tile[1]][tile[0]] in level.climbable_tiles

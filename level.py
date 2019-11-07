@@ -22,12 +22,16 @@ class Level():
         # TODO: Create one more layer for spawns and checkpoints, then read those into memory and set
         # spawn and checkpoints for the player.
 
-    def render(self, camera, tilemap, colkey):
-        # render the tileset based on each Tilemap's matrix.
+    def set_base_offset(self, camera):
         base_x = camera.offset_x // self.tile_size
         mod_offset_x = camera.offset_x % self.tile_size
         base_y = camera.offset_y // self.tile_size
         mod_offset_y = camera.offset_y % self.tile_size
+        return base_x, mod_offset_x, base_y, mod_offset_y
+
+    def render(self, camera, tilemap, colkey):
+        # render the tileset based on each Tilemap's matrix.
+        base_x, mod_offset_x, base_y, mod_offset_y = self.set_base_offset(camera)
         for idy, arr in enumerate(tilemap.matrix[base_y:base_y+camera.height_in_tiles+1]):
             for idx, val in enumerate(arr[base_x:base_x+camera.width_in_tiles+1]):
                 if val != -1:
@@ -46,7 +50,6 @@ class Tilemap():
     def update_tile(self, x, y, val):
         if self.mutable:
             self.matrix[x][y] = val
-
 
 def build_tilemap(map_file, layer):
     matrix = []

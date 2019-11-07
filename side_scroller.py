@@ -22,10 +22,13 @@ class App:
         )
 
         pyxel.image(0).load(0, 0, os.path.join(self.assets, 'animation.png'))
-        pyxel.image(1).load(0, 0, os.path.join(self.assets, self.levelname, 'tileset.png'))
-        pyxel.image(2).load(0, 0, os.path.join(self.assets, self.levelname, 'background.png'))
+        pyxel.image(1).load(0, 0, os.path.join(
+            self.assets, self.levelname, 'tileset.png'))
+        pyxel.image(2).load(0, 0, os.path.join(
+            self.assets, self.levelname, 'background.png'))
 
-        self.level = Level(os.path.join(self.assets, self.levelname), 'mapfile.txt', 16)
+        self.level = Level(os.path.join(
+            self.assets, self.levelname), 'mapfile.txt', 16)
         self.camera = Camera(self.level)
         self.player = Player(self.assets)
         self.sparkle_emitter = ParticleEmitter(self.player)
@@ -67,7 +70,8 @@ class App:
         #     pyxel.blt(i * 240 - self.camera.offset_x/2, 39, 2, 0, 82, 240, 82, 1)
         # render the clouds
         for i in range(2):
-            pyxel.blt(i * 240 - self.camera.offset_x//50, 10 - self.camera.offset_y//50, 2, 0, 168, 240, 40, 1)
+            pyxel.blt(i * 240 - self.camera.offset_x//50, 10 -
+                      self.camera.offset_y//50, 2, 0, 168, 240, 40, 1)
         self.level.render(self.camera, self.level.background, 1)
         self.level.render(self.camera, self.level.collision, 1)
         self.sparkle_emitter.render_particles()
@@ -95,7 +99,7 @@ class App:
 
         self.player.update_gravity()
         self.sparkle_emitter.update_position(self.camera.offset_delta())
-        self.sparkle_emitter.sparkle(0, 1, 12)
+        self.sparkle_emitter.sparkle(-2, 1, 12)
 
     # def respawn(self):
     #     self.zero_frame = pyxel.frame_count
